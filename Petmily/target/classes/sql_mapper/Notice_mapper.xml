@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+ "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+ 
+ <mapper namespace="Notice"> 
+  <!-- 공지사항 게시판 리스트 -->
+<select id="NoticeList" resultType="notice" parameterType="notice">
+	SELECT * FROM NOTICE_LIST WHERE NOTICE_LIST.RN BETWEEN #{startRow} AND #{endRow}
+</select>
+ 
+  <!-- 공지사항 글등록 -->
+ <insert id="NoticeWrit" parameterType="notice" useGeneratedKeys="true" keyProperty="notice_number">
+INSERT INTO NOTICE VALUES(NOTICE_SEQ.nextval,#{notice_title},#{notice_writer},#{notice_contents},#{notice_FILE})
+<selectKey keyProperty="notice_number" resultType="int" order="AFTER">
+SELECT NOTICE_SEQ.CURRVAL FROM DUAL
+</selectKey>
+</insert>
+ <!-- 공지사항 글 상세보기  -->
+ <select id="NoticeView" parameterType="notice" resultType="notice">
+ SELECT * FROM NOTICE WHERE notice_number=#{notice_number}
+</select>
+
+ <!-- 공지사항 이전글 상세보기  -->
+ <select id="notice_Previous_View" parameterType="notice" resultType="notice">
+ SELECT * FROM NOTICE WHERE NOTICE_NUMBER IN (
+   SELECT MIN(NOTICE_NUMBER) FROM NOTICE WHERE NOTICE_NUMBER > #{notice_number})
+</select>
+
+ <!-- 공지사항 다음글 상세보기  -->
+ <select id="notice_next_View" parameterType="notice" resultType="notice">
+ <![CDATA[ 
+ SELECT*  FROM NOTICE WHERE NOTICE_NUMBER IN (
+   SELECT MIN(NOTICE_NUMBER) FROM NOTICE WHERE NOTICE_NUMBER < #{notice_number})
+    ]]>
+</select>
+ 
+ <!-- 공지사항 목록  페이징 카운트  -->
+    <select id="Notice_Count" resultType="int">
+		SELECT COUNT(*) FROM NOTICE
+   </select>
+ 
+ 
+  <!-- 공지사항 제목과 내용검색   페이징 카운트  -->
+ <select id="notice_search_Count" resultType="int">
+		SELECT COUNT(*) FROM NOTICE WHERE notice_title like '%' ||  #{notice_title} || '%' or (notice_contents like '%' ||  #{notice_contents} || '%')  
+		
+</select>
+
+ 
+  <!-- 공지사항 제목과 내용검색   페이징  -->
+
+<select id="notice_search_List" resultType="notice" parameterType="notice">
+ select * from (select notice_number, notice_title, notice_writer,notice_contents,notice_FILE,ROW_NUMBER() 
+over(order by notice_number DESC)AS RN FROM NOTICE_LIST WHERE notice_title like '%' ||  #{notice_title} || '%' 
+or (notice_contents like '%' ||  #{notice_contents} || '%')  ) NOTICE where RN BETWEEN #{startRow} AND #{endRow} 
+</select>
+ 
+ 
+ </mapper>
